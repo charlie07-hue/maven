@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="member">
+	<select id="selectList" resultType="chap09.MemberVo"> 
+		select mno,email,pwd,mname,cre_date from members order by mno asc
+	</select> 
+		
+	<select id="login" resultType="chap09.MemberVo" parameterType="chap09.MemberVo"> 
+		select mno,email,pwd,mname,cre_date from members 
+		where email=#{email} and pwd=#{pwd}
+	</select>
+	
+	<select id="selectOne" resultType="chap09.MemberVo" parameterType="int"> <!-- integer 인데 alias 걸림. 하나일때만 가능 -->
+		select mno,email,pwd,mname,cre_date from members 
+		where mno=#{mno}
+	</select>
+	
+	<update id="update" parameterType="chap09.MemberVo"> 
+		update members set mname=#{mname} , email=#{email} <!-- .getEmail 이런식으로 메소드 호출되는것 -->
+		<if test="pwd != ''">,pwd=#{pwd}</if> <!-- comma 위치 확인. #{email} 뒤가 아님! -->
+		where mno=#{mno}
+	</update>
+	
+	<insert id="insert" parameterType="chap09.MemberVo"> <!-- member_mno를 추가하려면 기존의 members의 mno 뒤로 와야하니까  -->
+		insert into members (email, mname, pwd, cre_date, mod_date) values (#{email}, #{mname}, #{pwd}, now(), now()) 
+		<selectKey keyProperty="mno" resultType="int" order="AFTER"> <!-- insert sql 실행 → last_insert_id() method 실행 → chap09.MemberVo에 set이됨 -->
+			select last_insert_id()
+		</selectKey>
+	</insert>
+	
+	<insert id="insertSchool" parameterType="map"> <!-- alias 걸린것. 원래 java.util.Map (put put put해서 들어가니까 MemberVo대신 써도 됨)-->
+	<!-- members_mno col의 이름을 오타내면 오류 발생 → members table에만 추가됨. 이러한 현상 방지하기 위해 transaction 사용 @@autocommit 0(false) 상태에서만 가능-->
+	<!-- db에서 members table → set autocommit = 0 / MvcConfig.java, serviceImpl 에다가 Annotation 추가--> <!-- pom.xml 파일속 spring-tx -->
+		insert into school (members_mno, school, year) values (#{members_mno}, #{school}, #{year})
+	</insert>
+</mapper>   
